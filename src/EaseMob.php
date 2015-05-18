@@ -31,7 +31,6 @@ class EaseMob
                  'headers'   =>  ['Authorization' => 'Bearer ' . $this->getToken()]
              ],
         ]);
-        $this->getToken();
     }
 
 

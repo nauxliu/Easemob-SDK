@@ -16,6 +16,8 @@ class EaseMob
 
     private $url;
 
+    private $token;
+
 
     public function __construct($client_id, $client_secret, $org_name, $app_name, $server_url)
     {
@@ -62,6 +64,10 @@ class EaseMob
      */
     public function getToken()
     {
+        if($this->token) {
+            return $this->token;
+        }
+
         $client = new Client([
             'base_url'  =>  $this->url,
         ]);
@@ -75,6 +81,6 @@ class EaseMob
         //TODO: cache the token
         $result = $res->json();
 
-        return $result['access_token'];
+        return $this->token = $result['access_token'];
     }
 }

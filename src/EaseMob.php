@@ -60,6 +60,30 @@ class EaseMob
     }
 
     /**
+     * @param string $from_user 发送者用户名
+     * @param array $username array('1','2') 接收者
+     * @param string $target_type 默认为：users。向用户发消息: users, 向群组发送消息: chatgroups
+     * @param string $content 消息内容
+     * @param array $ext 自定义扩展字段
+     * @return \GuzzleHttp\Message\ResponseInterface
+     */
+    public function sendMessage($from_user = 'admin', $username, $content, $target_type = 'users', Array $ext = [])
+    {
+        $body['target_type'] = $target_type;
+        $body['target'] = (Array)$username;
+        $body['msg'] = [
+            'type' => 'txt',
+            'msg'  => $content
+        ];
+        $body['from'] = $from_user;
+        $body['ext'] = $ext;
+
+        return $this->client->post('messages', [
+            'body' => json_encode($body)
+        ]);
+    }
+
+    /**
      * 获取 Token
      */
     public function getToken()

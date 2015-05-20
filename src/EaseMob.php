@@ -1,6 +1,7 @@
 <?php namespace Naux\EaseMob;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 
 class EaseMob
 {
@@ -81,6 +82,31 @@ class EaseMob
         return $this->client->post('messages', [
             'body' => json_encode($body)
         ]);
+    }
+
+    /**
+     * 添加一个用户到群组
+     *
+     * @author Xuan
+     * @param $group_id
+     * @param $user_name
+     * @return bool
+     */
+    public function addMember($group_id, $user_name)
+    {
+        $url = $this->url . 'chatgroups/' . $group_id . '/users/' . $user_name;
+
+        try{
+            $response = $this->client->post($url);
+        }catch (RequestException $e){
+            $response = $e->getResponse();
+        }
+
+        if($response->getStatusCode() != 200){
+            return false;
+        }
+
+        return true;
     }
 
     /**

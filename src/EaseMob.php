@@ -30,9 +30,9 @@ class EaseMob
 
         $this->client = new Client([
             'base_url'  =>  $this->url,
-             'defaults'  =>  [
-                 'headers'   =>  ['Authorization' => 'Bearer ' . $this->getToken()]
-             ],
+            'defaults'  =>  [
+                'headers'   =>  ['Authorization' => 'Bearer ' . $this->getToken()]
+            ],
         ]);
     }
 
@@ -95,6 +95,54 @@ class EaseMob
     public function addMember($group_id, $user_name)
     {
         $url = $this->url . 'chatgroups/' . $group_id . '/users/' . $user_name;
+
+        try{
+            $response = $this->client->post($url);
+        }catch (RequestException $e){
+            $response = $e->getResponse();
+        }
+
+        if($response->getStatusCode() != 200){
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 禁用一个用户
+     *
+     * @author Xuan
+     * @param $user_id
+     * @return bool
+     */
+    public function deactivate($user_id)
+    {
+        $url = $this->url . 'users/' . $user_id . '/deactivate';
+
+        try{
+            $response = $this->client->post($url);
+        }catch (RequestException $e){
+            $response = $e->getResponse();
+        }
+
+        if($response->getStatusCode() != 200){
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 解禁一个用户
+     *
+     * @author Xuan
+     * @param $user_id
+     * @return bool
+     */
+    public function activate($user_id)
+    {
+        $url = $this->url . 'users/' . $user_id . '/activate';
 
         try{
             $response = $this->client->post($url);

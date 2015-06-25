@@ -67,6 +67,9 @@ class EaseMob
      * @param string $content 消息内容
      * @param array $ext 自定义扩展字段
      * @return \GuzzleHttp\Message\ResponseInterface
+     * 
+     * @note 群发的话，你可以在 $username 数组里面最多写20个用户的名字， 同一个IP每秒最多可调用30次，
+     *  这样的话，每秒大概能给600个用户发送消息
      */
     public function sendMessage($from_user = 'admin', $username, $content, $target_type = 'users', Array $ext = [])
     {

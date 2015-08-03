@@ -61,11 +61,7 @@ class EaseMob
         $query['limit'] = $limit;
 
         //delete empty query
-        foreach($query as $key => $value){
-            if(empty($value)){
-                unset($query[$key]);
-            }
-        }
+        $query = array_filter($query);
 
         return $this->get('chatmessages?' . http_build_query($query));
     }

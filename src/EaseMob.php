@@ -203,7 +203,7 @@ class EaseMob
         return $this->last_response;
     }
 
-    private function __call($func, $args)
+    public function __call($func, $args)
     {
         if(in_array($func, ['get', 'post', 'head', 'delete', 'put', 'patch', 'options'])){
             try{

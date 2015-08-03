@@ -19,6 +19,8 @@ class EaseMob
 
     private $token;
 
+    private $last_response;
+
 
     public function __construct($client_id, $client_secret, $org_name, $app_name, $server_url)
     {
@@ -37,11 +39,19 @@ class EaseMob
     }
 
 
+    /**
+     * 获取用户详细个人资料
+     * @author Xuan
+     * @return mixed
+     */
     public function userDetails($username)
     {
-        return $this->client->get('users/'.$username);
+        return $this->get('users/'.$username);
     }
 
+    /**
+     * 获取聊天记录
+     */
     public function chatRecord($ql = '', $cursor = '', $limit = 20)
     {
         $query = [];
@@ -57,19 +67,18 @@ class EaseMob
             }
         }
 
-        return $this->client->get('chatmessages?' . http_build_query($query));
+        return $this->get('chatmessages?' . http_build_query($query));
     }
 
     /**
+     * 向用户发送消息
+     *
      * @param string $from_user 发送者用户名
      * @param array $username array('1','2') 接收者
      * @param string $target_type 默认为：users。向用户发消息: users, 向群组发送消息: chatgroups
      * @param string $content 消息内容
      * @param array $ext 自定义扩展字段
      * @return \GuzzleHttp\Message\ResponseInterface
-     * 
-     * @note 群发的话，你可以在 $username 数组里面最多写20个用户的名字， 同一个IP每秒最多可调用30次，
-     *  这样的话，每秒大概能给600个用户发送消息
      */
     public function sendMessage($from_user = 'admin', $username, $content, $target_type = 'users', Array $ext = [])
     {
@@ -82,7 +91,7 @@ class EaseMob
         $body['from'] = $from_user;
         $body['ext'] = $ext;
 
-        return $this->client->post('messages', [
+        return $this->post('messages', [
             'body' => json_encode($body)
         ]);
     }
@@ -99,17 +108,27 @@ class EaseMob
     {
         $url = $this->url . 'chatgroups/' . $group_id . '/users/' . $user_name;
 
-        try{
-            $response = $this->client->post($url);
-        }catch (RequestException $e){
-            $response = $e->getResponse();
-        }
+        $response = $this->post($url);
 
-        if($response->getStatusCode() != 200){
-            return false;
-        }
+        return $response->getStatusCode() == 200;
+    }
 
-        return true;
+    /**
+     * 添加一组用户到群组
+     * @author Xuan
+     * @param $group_id
+     * @param $user_names
+     * @return bool
+     */
+    public function addMembers($group_id, $user_names)
+    {
+        $url = $this->url . 'chatgroups/' . $group_id . '/users';
+
+        $response = $this->post($url, [
+            'body' => json_encode($user_names),
+        ]);
+
+        return $response->getStatusCode() == 200;
     }
 
     /**
@@ -123,17 +142,9 @@ class EaseMob
     {
         $url = $this->url . 'users/' . $user_id . '/deactivate';
 
-        try{
-            $response = $this->client->post($url);
-        }catch (RequestException $e){
-            $response = $e->getResponse();
-        }
+        $response = $this->post($url);
 
-        if($response->getStatusCode() != 200){
-            return false;
-        }
-
-        return true;
+        return $response->getStatusCode() == 200;
     }
 
     /**
@@ -147,21 +158,24 @@ class EaseMob
     {
         $url = $this->url . 'users/' . $user_id . '/activate';
 
-        try{
-            $response = $this->client->post($url);
-        }catch (RequestException $e){
-            $response = $e->getResponse();
-        }
+        $response = $this->post($url);
 
-        if($response->getStatusCode() != 200){
-            return false;
-        }
+        return $response->getStatusCode() == 200;
+    }
 
-        return true;
+    /**
+     * 设置 token， （在应用中缓存，不用每次都访问环信重新获取）
+     * @author Xuan
+     * @param $token
+     */
+    public function setToken($token)
+    {
+        $this->token = $token;
     }
 
     /**
      * 获取 Token
+     * @author Xuan
      */
     public function getToken()
     {
@@ -173,15 +187,37 @@ class EaseMob
             'base_url'  =>  $this->url,
         ]);
 
-        $body['grant_type']    = "client_credentials";
+        $body['grant_type']    = 'client_credentials';
         $body['client_id']     = $this->client_id;
         $body['client_secret'] = $this->client_secret;
 
-        $res = $client->post('token', [ 'body' => json_encode($body) ]);
+        $response = $client->post('token', [ 'body' => json_encode($body) ]);
 
-        //TODO: cache the token
-        $result = $res->json();
+        $this->last_response = $response;
+        $result = $response->json();
 
         return $this->token = $result['access_token'];
+    }
+
+    /**
+     * 获取最后的一个响应
+     * @author Xuan
+     */
+    public function getLastResponse(){
+        return $this->last_response;
+    }
+
+    private function __call($func, $args)
+    {
+        if(in_array($func, ['get', 'post', 'head', 'delete', 'put', 'patch', 'options'])){
+            try{
+                $response = call_user_func_array([$this->client, $func], $args);
+            }catch (RequestException $e){
+                $response = $e->getResponse();
+            }
+
+            $this->last_response = $response;
+            return $response;
+        }
     }
 }

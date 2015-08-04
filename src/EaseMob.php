@@ -33,11 +33,12 @@ class EaseMob
         $this->org_name = $org_name;
         $this->app_name = $app_name;
         $this->url = $server_url . '/' . $org_name . '/' . $app_name . '/';
+        $token = $token ?: $this->getToken();
 
         $this->client = new Client([
             'base_url' => $this->url,
             'defaults' => [
-                'headers' => ['Authorization' => 'Bearer ' . $token ?: $this->getToken()]
+                'headers' => ['Authorization' => 'Bearer ' . $token]
             ],
         ]);
     }
@@ -182,7 +183,7 @@ class EaseMob
     {
         $url = $this->url . 'users/' . $owner_user_name . '/blocks/users';
         $response = $this->post($url, [
-            'body' => ['usernames' =>(array) $user_name]
+            'body' => ['usernames' => (array)$user_name]
         ]);
 
         return $response->getStatusCode() == 200;
@@ -263,7 +264,7 @@ class EaseMob
             throw new BadFunctionCallException();
         }
 
-        if(count($args) == 2){
+        if (count($args) == 2) {
             list($url, $options) = $args;
 
             if (isset($options['body'])) {

@@ -26,7 +26,7 @@ class EaseMob
     private $last_response;
 
 
-    public function __construct($client_id, $client_secret, $org_name, $app_name, $server_url)
+    public function __construct($client_id, $client_secret, $org_name, $app_name, $server_url, $token = null)
     {
         $this->client_id = $client_id;
         $this->client_secret = $client_secret;
@@ -37,7 +37,7 @@ class EaseMob
         $this->client = new Client([
             'base_url' => $this->url,
             'defaults' => [
-                'headers' => ['Authorization' => 'Bearer ' . $this->getToken()]
+                'headers' => ['Authorization' => 'Bearer ' . $token ?: $this->getToken()]
             ],
         ]);
     }
@@ -56,6 +56,7 @@ class EaseMob
 
     /**
      * 获取聊天记录
+     *
      * @param string $ql
      * @param string $cursor
      * @param int $limit
@@ -70,7 +71,11 @@ class EaseMob
         $query['limit'] = $limit;
 
         //delete empty query
-        $query = array_filter($query);
+        foreach ($query as $key => $value) {
+            if (empty($value)) {
+                unset($query[$key]);
+            }
+        }
 
         return $this->get('chatmessages?' . http_build_query($query))->json();
     }
@@ -165,19 +170,42 @@ class EaseMob
         return $response->getStatusCode() == 200;
     }
 
+
     /**
-     * 设置 token， （在你自己的应用中缓存，就不用每次都访问环信重新获取）
+     * 往黑名单中添加用户
      *
-     * @author Xuan
-     * @param $token
+     * @param $owner_user_name 黑名单拥有者
+     * @param $user_name 可传字符串或数组，数组为多个用户
+     * @return bool
      */
-    public function setToken($token)
+    public function addToBlocks($owner_user_name, $user_name)
     {
-        $this->token = $token;
+        $url = $this->url . 'users/' . $owner_user_name . '/blocks/users';
+        $response = $this->post($url, [
+            'body' => ['usernames' =>(array) $user_name]
+        ]);
+
+        return $response->getStatusCode() == 200;
+    }
+
+    /**
+     * 把用户从黑名单移除
+     *
+     * @param $owner_user_name 黑名单拥有者
+     * @param $user_name 要移出黑名单的用户
+     * @return bool
+     */
+    public function removeFromBlocks($owner_user_name, $user_name)
+    {
+        $url = $this->url . 'users/' . $owner_user_name . '/blocks/users/' . $user_name;
+        $response = $this->delete($url);
+
+        return $response->getStatusCode() == 200;
     }
 
     /**
      * 获取 Token
+     *
      * @return String
      */
     public function getToken()
@@ -194,7 +222,7 @@ class EaseMob
         $body['client_id'] = $this->client_id;
         $body['client_secret'] = $this->client_secret;
 
-        $response = $client->post('token', ['body' => $body]);
+        $response = $client->post('token', ['body' => $this->encode($body)]);
 
         $this->last_response = $response;
         $result = $response->json();
@@ -203,11 +231,19 @@ class EaseMob
     }
 
     /**
-     * 获取最后的一个响应
+     * 获取最后的一个响应对象
      */
     public function getLastResponse()
     {
         return $this->last_response;
+    }
+
+    /**
+     * 获取最后的一个响应内容
+     */
+    public function getLastResponseContent()
+    {
+        return $this->last_response->json();
     }
 
     /**
@@ -223,18 +259,22 @@ class EaseMob
 
     public function __call($func, $args)
     {
-        if (!in_array($func, ['get', 'post', 'head', 'delete', 'put', 'patch', 'options']) && count($args) !== 2) {
+        if (!in_array($func, ['get', 'post', 'head', 'delete', 'put', 'patch', 'options']) && count($args) < 1) {
             throw new BadFunctionCallException();
         }
 
-        list($url, $options) = explode($args);
+        if(count($args) == 2){
+            list($url, $options) = $args;
 
-        if (isset($options['body'])) {
-            $options['body'] = $this->encode($options['body']);
+            if (isset($options['body'])) {
+                $options['body'] = $this->encode($options['body']);
+            }
+
+            $args = [$url, $options];
         }
 
         try {
-            $response = call_user_func_array([$this->client, $func], [$url, $options]);
+            $response = call_user_func_array([$this->client, $func], $args);
         } catch (RequestException $e) {
             $response = $e->getResponse();
         }

@@ -57,8 +57,8 @@ class EaseMob
     {
         $url = $this->url . 'chatgroups/' . $group_id;
 
-        $response = $this->post($url, [
-            'body' => compact('groupname', 'description', 'maxusers')
+        $response = $this->put($url, [
+            'body' => array_filter(compact('groupname', 'description', 'maxusers'))
         ]);
 
         return $response->getStatusCode() == 200;

@@ -3,6 +3,7 @@
 use BadFunctionCallException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Message\ResponseInterface;
 
 class EaseMob
 {
@@ -43,6 +44,25 @@ class EaseMob
         ]);
     }
 
+    /**
+     * 更新群组信息
+     *
+     * @param $group_id
+     * @param $groupname
+     * @param $description
+     * @param $maxusers
+     * @return bool
+     */
+    public function updateGroup($group_id, $groupname = null, $description = null, $maxusers = null)
+    {
+        $url = $this->url . 'chatgroups/' . $group_id;
+
+        $response = $this->post($url, [
+            'body' => compact('groupname', 'description', 'maxusers')
+        ]);
+
+        return $response->getStatusCode() == 200;
+    }
 
     /**
      * 获取用户详细个人资料
@@ -251,7 +271,7 @@ class EaseMob
      * 环信要求请求数据用 json 格式
      *
      * @param $value
-     * @return string
+     * @return ResponseInterface
      */
     private function encode($value)
     {

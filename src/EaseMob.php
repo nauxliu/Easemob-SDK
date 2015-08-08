@@ -179,7 +179,7 @@ class EaseMob
         $url = $this->url . 'chatgroups/' . $group_id . '/users';
 
         $response = $this->post($url, [
-            'body' => $user_names,
+            'body' => ['usernames' => $user_names],
         ]);
 
         return $response->getStatusCode() == 200;

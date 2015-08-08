@@ -178,6 +178,10 @@ class EaseMob
     {
         $url = $this->url . 'chatgroups/' . $group_id . '/users';
 
+        $user_names = array_map(function ($name){
+            return (string) $name;
+        }, $user_names);
+
         $response = $this->post($url, [
             'body' => ['usernames' => $user_names],
         ]);

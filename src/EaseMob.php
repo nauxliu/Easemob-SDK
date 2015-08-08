@@ -45,6 +45,29 @@ class EaseMob
     }
 
     /**
+     * 获取单个群组信息
+     *
+     * @param $group_id
+     */
+    public function groupDetails($group_id)
+    {
+        return $this->groupsDetails((array)$group_id);
+    }
+
+    /**
+     * 获取多个聊天室信息
+     *
+     * @param array $group_ids
+     */
+    public function groupsDetails(Array $group_ids)
+    {
+        $groups_str = implode(',', $group_ids);
+        $url = $this->url . 'chatgroups/' . $groups_str;
+
+        return $this->result($this->get($url));
+    }
+
+    /**
      * 更新群组信息
      *
      * @param $group_id
@@ -72,7 +95,8 @@ class EaseMob
      */
     public function userDetails($username)
     {
-        return $this->get('users/' . $username)->json();
+        $response = $this->get('users/' . $username);
+        return $this->result($response);
     }
 
     /**
@@ -303,5 +327,18 @@ class EaseMob
         $this->last_response = $response;
 
         return $response;
+    }
+
+    /**
+     * @param $response
+     * @return bool
+     */
+    public function result($response)
+    {
+        if ($response->getStatusCode() != 200) {
+            return false;
+        }
+
+        return $response->json();
     }
 }
